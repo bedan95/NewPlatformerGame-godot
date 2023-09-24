@@ -1,4 +1,4 @@
-using Godot;
+    using Godot;
 using System;
 
 public partial class Player : CharacterBody2D
@@ -35,10 +35,13 @@ public partial class Player : CharacterBody2D
         // As good practice, you should replace UI actions with custom gameplay actions.
         var direction = GetDirection;
 
-        var isFlipH = direction.X == -1;
-        if (GetSprite.FlipH != isFlipH)
+        if(direction.X == -1 && !GetSprite.FlipH)
         {
-            GetSprite.FlipH = isFlipH;
+            GetSprite.FlipH = true;
+        }
+        else if(direction.X == 1 && GetSprite.FlipH)
+        {
+            GetSprite.FlipH = false;
         }
 
         if (direction != Vector2.Zero)
