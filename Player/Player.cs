@@ -13,6 +13,8 @@ public partial class Player : CharacterBody2D
     Vector2 GetDirection => Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down");
     AnimationPlayer GetAnimation => ((AnimationPlayer)GetNode("AnimationPlayer"));
     AnimatedSprite2D GetAnimatedSprite2D => ((AnimatedSprite2D)GetNode("AnimatedSprite2D"));
+    Game Game => GetNode<Game>("/root/Game");
+
     public int Health
     {
         get => _health;
@@ -27,11 +29,12 @@ public partial class Player : CharacterBody2D
             }
             else
             {
-
+                this.QueueFree();
+                GetTree().ChangeSceneToFile("res://world.tscn");
             }
         }
     }
-    bool IsDazed { get; set; } = false;
+    public bool IsDazed { get; set; } = false;
 
     public override void _PhysicsProcess(double delta)
     {
@@ -100,6 +103,14 @@ public partial class Player : CharacterBody2D
 
         Velocity = velocity;
         MoveAndSlide();
+
+        if(Game.Health == 0)
+        {
+            this.QueueFree();
+            Game.Health = 10;
+            Game.Gold = 0;
+            GetTree().ChangeSceneToFile("res://main.tscn");
+        }
     }
 
     public override void _Ready()

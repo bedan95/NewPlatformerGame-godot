@@ -11,6 +11,9 @@ public partial class Frog : CharacterBody2D
     float Speed => 50f;
     AnimatedSprite2D GetAnimatedSprite2D => ((AnimatedSprite2D)GetNode("AnimatedSprite2D"));
     CollisionShape2D GetCollisionShape2D => ((CollisionShape2D)GetNode("CollisionShape2D"));
+    Game Game => GetNode<Game>("/root/Game");
+    Utils Utils => GetNode<Utils>("/root/Utils");
+    bool IsDying { get; set; } = false;
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -41,6 +44,9 @@ public partial class Frog : CharacterBody2D
 
     public override void _PhysicsProcess(double delta)
     {
+        if (IsDying)
+            return;
+
         Vector2 velocity = Velocity;
 
         // Add the gravity.
@@ -89,35 +95,57 @@ public partial class Frog : CharacterBody2D
     {
         if (body.Name == "Player")
         {
-            gravity = 0;
-            Velocity = Vector2.Zero;
-            IsChaseing = false;
-            GetAnimatedSprite2D.Play("Death");
-            GetCollisionShape2D.QueueFree();
-            GetAnimatedSprite2D.AnimationFinished += () => this.QueueFree();
+            Die();
         }
+    }
+
+    void Die()
+    {
+        IsDying = true;
+        foreach(var child in GetChildren())
+        {
+            if(child is AnimatedSprite2D == false)
+            {
+                child.QueueFree();
+            }
+        }
+        gravity = 0;
+        Velocity = Vector2.Zero;
+        IsChaseing = false;
+        GetAnimatedSprite2D.Play("Death");
+        GetAnimatedSprite2D.AnimationFinished += () => this.QueueFree();
+        Game.Gold += 5;
+        
+        Utils.SaveGame();
     }
 
     public void OnPlayerDamageBodyEntered(Node2D body)
     {
         if (body.Name == "Player")
         {
-            Player.Health--;
-            var direction = (Player.Position - this.Position).Normalized();
-            direction.X *= 100;
-
-            const float speed = 1000;
-            var velocity = Player.Velocity;
-            if (direction.X < 0)
-            {
-                velocity.X = -speed;
-            }
-            else
-            {
-                velocity.X = speed;
-            }
-            Player.Velocity = velocity;
-            Player.MoveAndSlide();
+            HitPlayer();
         }
+    }
+
+    void HitPlayer()
+    {
+        Game.Health--;
+        Player.IsDazed = true;
+
+        var direction = (Player.Position - this.Position).Normalized();
+        direction.X *= 100;
+
+        const float speed = 500;
+        var velocity = Player.Velocity;
+        if (direction.X < 0)
+        {
+            velocity.X = -speed;
+        }
+        else
+        {
+            velocity.X = speed;
+        }
+        Player.Velocity = velocity;
+        Player.MoveAndSlide();
     }
 }
